@@ -65,8 +65,8 @@ var Validate = {
 				default:
 					value = $(element).val();
 			}
-		}else if ($(element).hasAttr('form-editor')){
-			if ($(element).hasAttr('form-name')){
+		}else if ('string' == $.type($(element).attr('form-editor'))){
+			if ('string' == $.type($(element).attr('form-name'))){
 				let editor = $(element).attr('form-editor'),
 					name = $(element).attr('form-name');
 				switch(editor){
@@ -79,7 +79,10 @@ var Validate = {
 				}
 			}
 			
-		}else if ($(element).hasAttr('form-div') && +$(element).attr('form-div') === 1) value = $(element).html();
+		}else if (
+			'string' == $.type($(element).attr('form-div')) && 
+			+$(element).attr('form-div') === 1
+		) value = $(element).html();
 		else value = $(element).val();
 		return value;
 	},
