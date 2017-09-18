@@ -14,6 +14,7 @@ var Validate = {
 			doAjax : true,
 			attribute : 'form-valid',
 			submit : false,
+			beforeValid : function(){},
 			validError : function(){},
 			handlingForm : function(){},
 			beforeSend : function(){},
@@ -51,19 +52,19 @@ var Validate = {
 
 	// Get value of element validate
 	getValue : function(element){
-		let value = null;
+		let result = null;
 		if ('INPUT' === element.nodeName){
 			let type = $(element).attr('type');
 			switch(type){
 				case 'file':
-					if (element.files.length) value = element.files;
+					if (element.files.length) result = element.files;
 					break;
 				case 'checkbox':
 				case 'radio':
-					if ($(element).is(':checked')) value = $(element).val()
+					if ($(element).is(':checked')) result = $(element).val()
 					break;
 				default:
-					value = $(element).val();
+					result = $(element).val();
 			}
 		}else if ('string' == $.type($(element).attr('form-editor'))){
 			if ('string' == $.type($(element).attr('form-name'))){
@@ -71,10 +72,10 @@ var Validate = {
 					name = $(element).attr('form-name');
 				switch(editor){
 					case 'ckeditor':
-						value = CKEDITOR.instances[name].getData();
+						result = CKEDITOR.instances[name].getData();
 						break;
 					case 'tinymce':
-						value = tinyMCE.get(name).getContent();
+						result = tinyMCE.get(name).getContent();
 						break;
 				}
 			}
@@ -82,9 +83,9 @@ var Validate = {
 		}else if (
 			'string' == $.type($(element).attr('form-div')) && 
 			+$(element).attr('form-div') === 1
-		) value = $(element).html();
-		else value = $(element).val();
-		return value;
+		) result = $(element).html();
+		else result = $(element).val();
+		return result;
 	},
 
 	checkRuleRange : function(value, rule, element, name){
@@ -114,7 +115,7 @@ var Validate = {
 	},
 
 	// Validate type integer
-	validInteger(element, rule){
+	validInteger : function(element, rule){
 		let value = this.getValue(element);
 		if (this.isInt(value)){
 			value = parseInt(value);
@@ -123,7 +124,7 @@ var Validate = {
 	},
 
 	// Validate type email
-	validEmail(element, rule){
+	validEmail : function(element, rule){
 		let value = this.getValue(element),
 			regex = /^[A-Za-z\d]+[A-Za-z\d_\-\.]*[A-Za-z\d]+@([A-Za-z\d]+[A-Za-z\d\-]*[A-Za-z\d]+\.){1,2}[A-Za-z]{2,}$/g;
 		if (regex.test(value)) this.checkRuleRange(value, rule, element, 'INVALID_EMAIL');
@@ -252,11 +253,9 @@ var Validate = {
 					processData: false,
 					success : function(response, status, xhr){
 						Validate.options.ajaxSuccess(Validate.element, response, xhr);
-						this.options = null;
 					},
 					error : function(xhr, status, statusText){
 						Validate.options.ajaxError(Validate.element, xhr, statusText);
-						this.options = null;
 					}
 				});
 			}else this.options.handlingForm(this.element);
