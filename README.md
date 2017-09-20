@@ -6,7 +6,7 @@ This library need include JQuery
 
 ## 2. Validate Form
 
-````
+````javascript
 Validate.submit(selector, options);
 ````
 
@@ -14,7 +14,7 @@ Validate.submit(selector, options);
 
 ## 3. Validate section
 
-````
+````javascript
 Validate.action(selector, options);
 ````
 
@@ -129,7 +129,7 @@ For an element that is an editor, `Validate` only supports get value of the two 
 
 ## 8. Example
 
-````
+````html
 <style type="text/css">
 	.invalid{border: 1px solid red}	
 </style>
