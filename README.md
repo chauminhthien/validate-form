@@ -54,7 +54,7 @@ When `action` method called, **Validate** will start.
 ### + options.handlingForm(selector)
 
 * Specifies the function will handling selector form when all element specified by `options.attribute` were valid. This function is only called when `options.doAjax` is specified with `false`
-* Type : Funtion
+* Type : Function
 
 ### + options.validError(selector, error)
 
