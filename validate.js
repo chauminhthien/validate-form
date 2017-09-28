@@ -52,19 +52,19 @@ var Validate = {
 
 	// Get value of element validate
 	getValue : function(element){
-		let result = null;
+		let value = null;
 		if ('INPUT' === element.nodeName){
 			let type = $(element).attr('type');
 			switch(type){
 				case 'file':
-					if (element.files.length) result = element.files;
+					if (element.files.length) value = element.files;
 					break;
 				case 'checkbox':
 				case 'radio':
-					if ($(element).is(':checked')) result = $(element).val()
+					if ($(element).is(':checked')) value = $(element).val()
 					break;
 				default:
-					result = $(element).val();
+					value = $(element).val();
 			}
 		}else if ('string' == $.type($(element).attr('form-editor'))){
 			if ('string' == $.type($(element).attr('form-name'))){
@@ -72,10 +72,10 @@ var Validate = {
 					name = $(element).attr('form-name');
 				switch(editor){
 					case 'ckeditor':
-						result = CKEDITOR.instances[name].getData();
+						value = CKEDITOR.instances[name].getData();
 						break;
 					case 'tinymce':
-						result = tinyMCE.get(name).getContent();
+						value = tinyMCE.get(name).getContent();
 						break;
 				}
 			}
@@ -83,9 +83,9 @@ var Validate = {
 		}else if (
 			'string' == $.type($(element).attr('form-div')) && 
 			+$(element).attr('form-div') === 1
-		) result = $(element).html();
-		else result = $(element).val();
-		return result;
+		) value = $(element).html();
+		else value = $(element).val();
+		return value;
 	},
 
 	checkRuleRange : function(value, rule, element, name){
@@ -134,10 +134,10 @@ var Validate = {
 	// Validate type file
 	validSingleFile : function(file, rule, element){
 		if (undefined !== rule[3]){
-			let arrExt = rule[3].split(','),
+			let arrExt = rule[3].toLowerCase().split(','),
 				arrName = file.name.split('.'),
 				length = arrName.length;
-			if ($.inArray(arrName[length - 1], arrExt) < 0){
+			if ($.inArray(arrName[length - 1].toLowerCase(), arrExt) < 0){
 				this.error.push([element, 'INVALID_DENY_FILE']);
 				return false;
 			}
@@ -188,20 +188,42 @@ var Validate = {
 	// Main method validate form
 	action : function(selector, options){
 		// Reset options
-		if ('object' === $.type(options)) this.bindOptions(options);
-		else if (this.options === null) this.initOptions();
+		//if ('object' === $.type(options)) this.bindOptions(options);
+		//else if (this.options === null) this.initOptions();
+
+		let init = {
+			doAjax : true,
+			attribute : 'form-valid',
+			submit : false,
+			beforeValid : function(){},
+			validError : function(){},
+			handlingForm : function(){},
+			beforeSend : function(){},
+			ajaxSuccess : function(){},
+			ajaxError : function(){}
+		}
+		if ('object' === $.type(options)){
+			if ('function' === $.type(options.validError)) init.validError = options.validError;
+			if ('boolean' === $.type(options.doAjax)) init.doAjax = options.doAjax;
+			if ('function' === $.type(options.handlingForm)) init.handlingForm = options.handlingForm;
+			if ('function' === $.type(options.beforeSend)) init.beforeSend = options.beforeSend;
+			if ('function' === $.type(options.ajaxError)) init.ajaxError = options.ajaxError;
+			if ('function' === $.type(options.ajaxSuccess)) init.ajaxSuccess = options.ajaxSuccess;
+			if ('string' === $.type(options.attribute)) init.attribute = options.attribute;
+			if ('function' === $.type(options.beforeValid)) init.beforeValid = options.beforeValid;
+		}
 
 		// Reset element and error
-		this.element = selector;
+		//if (!this.element) this.element = $(selector);
 		this.error = [];
 
 		// Blur element and call before validate function
 		document.activeElement.blur();
-		this.options.beforeValid(this.element, this.options.attribute);
+		init.beforeValid(selector, init.attribute);
 
 		// Each element has rule of Validate
-		$(this.element).find('[' + this.options.attribute + ']').each(function(){
-			let rule = $(this).attr(Validate.options.attribute).split(':');
+		$(selector).find('[' + init.attribute + ']').each(function(){
+			let rule = $(this).attr(init.attribute).split(':');
 			switch(rule[0]){
 				case 'str':
 					Validate.validString(this, rule);
@@ -228,7 +250,7 @@ var Validate = {
 		});
 
 		if (!this.error.length){
-			if (this.options.doAjax){
+			if (init.doAjax){
 				let action = $(selector).attr('action') || '/',
 					method = $(selector).attr('method') || 'get',
 					form = new FormData();
@@ -244,7 +266,7 @@ var Validate = {
 						}
 					}
 				});
-				this.options.beforeSend(this.element, form);
+				init.beforeSend(selector, form);
 				$.ajax({
 					url : action,
 					data : form,
@@ -252,23 +274,24 @@ var Validate = {
 					contentType: false,
 					processData: false,
 					success : function(response, status, xhr){
-						Validate.options.ajaxSuccess(Validate.element, response, xhr);
+						init.ajaxSuccess(selector, response, xhr);
 					},
 					error : function(xhr, status, statusText){
-						Validate.options.ajaxError(Validate.element, xhr, statusText);
+						init.ajaxError(selector, xhr, statusText);
 					}
 				});
-			}else this.options.handlingForm(this.element);
-		}else this.options.validError(this.element, this.error);
+			}else init.handlingForm(selector);
+		}else init.validError(selector, this.error);
 		this.error = [];
 	},
 
 	// Bind submit for form
 	submit : function(selector, options){
-		this.bindOptions(options);
+		//this.bindOptions(options);
 		$(document).on('submit', selector, function(){
-			Validate.action(this);
-			return ('object' === $.type(Validate.options) && Validate.options.submit);
+			//Validate.element = this;
+			Validate.action(this, options);
+			return ('object' === $.type(options) && !!options.submit);
 		});
 	}
 };
