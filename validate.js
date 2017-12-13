@@ -1,27 +1,6 @@
 var Validate = {
-	// Element Form
-	element : null,
-
-	// Options validate form
-	options : null,
-
 	// Array element error
 	error : [],
-
-	// Initialize options
-	initOptions : function(){
-		this.options = {
-			doAjax : true,
-			attribute : 'form-valid',
-			submit : false,
-			beforeValid : function(){},
-			validError : function(){},
-			handlingForm : function(){},
-			beforeSend : function(){},
-			ajaxSuccess : function(){},
-			ajaxError : function(){}
-		};
-	},
 
 	// Check is number
 	isNum : function(value){
@@ -33,21 +12,6 @@ var Validate = {
 	isInt : function(value){
 		if(!this.isNum(value)) return false;
 		return /^\-?\d+$/g.test(value.toString());
-	},
-
-	// Bind options pass
-	bindOptions : function(options){
-		this.initOptions();
-		if ('object' === $.type(options)){
-			if ('function' === $.type(options.validError)) this.options.validError = options.validError;
-			if ('boolean' === $.type(options.doAjax)) this.options.doAjax = options.doAjax;
-			if ('function' === $.type(options.handlingForm)) this.options.handlingForm = options.handlingForm;
-			if ('function' === $.type(options.beforeSend)) this.options.beforeSend = options.beforeSend;
-			if ('function' === $.type(options.ajaxError)) this.options.ajaxError = options.ajaxError;
-			if ('function' === $.type(options.ajaxSuccess)) this.options.ajaxSuccess = options.ajaxSuccess;
-			if ('string' === $.type(options.attribute)) this.options.attribute = options.attribute;
-			if ('function' === $.type(options.beforeValid)) this.options.beforeValid = options.beforeValid;
-		}
 	},
 
 	// Get value of element validate
@@ -68,14 +32,17 @@ var Validate = {
 			}
 		}else if ('string' == $.type($(element).attr('form-editor'))){
 			if ('string' == $.type($(element).attr('form-name'))){
-				let editor = $(element).attr('form-editor'),
+				let editorName = $(element).attr('form-editor'),
 					name = $(element).attr('form-name');
-				switch(editor){
+				switch(editorName){
 					case 'ckeditor':
 						value = CKEDITOR.instances[name].getData();
 						break;
 					case 'tinymce':
 						value = tinyMCE.get(name).getContent();
+						break;
+					case 'ace':
+						value = editor.getValue();
 						break;
 				}
 			}
@@ -133,7 +100,7 @@ var Validate = {
 
 	// Validate type file
 	validSingleFile : function(file, rule, element){
-		if (undefined !== rule[3]){
+		if (undefined !== rule[3] && rule[3] != ''){
 			let arrExt = rule[3].toLowerCase().split(','),
 				arrName = file.name.split('.'),
 				length = arrName.length;
@@ -187,10 +154,6 @@ var Validate = {
 
 	// Main method validate form
 	action : function(selector, options){
-		// Reset options
-		//if ('object' === $.type(options)) this.bindOptions(options);
-		//else if (this.options === null) this.initOptions();
-
 		let init = {
 			doAjax : true,
 			attribute : 'form-valid',
@@ -214,7 +177,6 @@ var Validate = {
 		}
 
 		// Reset element and error
-		//if (!this.element) this.element = $(selector);
 		this.error = [];
 
 		// Blur element and call before validate function
@@ -287,9 +249,7 @@ var Validate = {
 
 	// Bind submit for form
 	submit : function(selector, options){
-		//this.bindOptions(options);
 		$(document).on('submit', selector, function(){
-			//Validate.element = this;
 			Validate.action(this, options);
 			return ('object' === $.type(options) && !!options.submit);
 		});
